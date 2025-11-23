@@ -20,12 +20,13 @@ button:hover{transform:translateY(-2px);}
 .toggle-dark{position:absolute;top:15px;right:15px;width:50px;height:50px;border-radius:50%;background:#e0e0e0;box-shadow:5px 5px 15px #bebebe,-5px -5px 15px #ffffff;cursor:pointer;text-align:center;line-height:50px;font-weight:bold;transition:all 0.3s;font-size:1.2rem;}
 body.dark-mode .toggle-dark{background:#2a2a2a;box-shadow:5px 5px 15px #1c1c1c,-5px -5px 15px #333;color:#f5f5f5;}
 #result{width:100%;overflow-x:auto;margin-top:20px;}
-#result table{width:100%;min-width:950px;border-collapse:collapse;box-shadow:10px 10px 30px #bebebe,-10px -10px 30px #ffffff;border-radius:15px;overflow:hidden;transition:box-shadow 0.3s;}
+#result table{width:100%;min-width:950px;border-collapse:collapse;table-layout:fixed;box-shadow:10px 10px 30px #bebebe,-10px -10px 30px #ffffff;border-radius:15px;overflow:hidden;transition:box-shadow 0.3s;}
 body.dark-mode #result table{box-shadow:10px 10px 30px #111,-10px -10px 30px #222;}
-th,td{padding:12px;text-align:left;border-bottom:1px solid #ccc;vertical-align:top;}
+th,td{padding:12px;text-align:left;border-bottom:1px solid #ccc;vertical-align:top;word-wrap:break-word;}
 body.dark-mode th,body.dark-mode td{border-bottom:1px solid #444;}
 th{background:#f0f0f0;box-shadow:inset 1px 1px 2px #bebebe,inset -1px -1px 2px #ffffff;}
 body.dark-mode th{background:#2a2a2a;}
+canvas{margin-top:20px;max-width:100%;}
 footer{margin-top:20px;text-align:center;font-size:0.9rem;color:#888;transition:color 0.3s;}
 body.dark-mode footer{color:#bbb;}
 @media(max-width:600px){.app-frame{padding:20px;}#result table,th,td{font-size:0.75rem;}}
@@ -34,16 +35,12 @@ body.dark-mode footer{color:#bbb;}
 <body>
 <div class="app-frame">
 <div class="toggle-dark" onclick="toggleDarkMode()">🌙</div>
-<h1>NumeroScope - Complete Numerology</h1>
-
-<!-- Personal Inputs -->
+<h1>NumeroScope</h1>
 <input type="text" id="fullName" placeholder="Full Name">
 <input type="date" id="birthDate" placeholder="Birth Date">
 <input type="text" id="secondName" placeholder="Optional Second Name">
 <input type="date" id="secondBirthDate" placeholder="Optional Second Birth Date">
 <textarea id="inputText" rows="4" placeholder="Other inputs (comma/new line)"></textarea>
-
-<!-- Additional Inputs -->
 <h2>Additional Numerology Inputs</h2>
 <input type="text" id="nameCorrection" placeholder="Name Correction Suggestion">
 <input type="text" id="homeAddress" placeholder="Home Address Number">
@@ -51,119 +48,50 @@ body.dark-mode footer{color:#bbb;}
 <input type="text" id="businessName" placeholder="Business Name">
 <input type="text" id="carPlate" placeholder="Car Number Plate">
 <input type="text" id="placeName" placeholder="Place Name">
-
-<!-- System Selection -->
 <select id="system">
 <option value="pythagoras">Pythagoras</option>
 <option value="chaldean">Chaldean</option>
 <option value="vedic">Vedic</option>
 <option value="kabbalah">Kabbalah</option>
 </select>
-
-<!-- Buttons -->
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;width:100%;">
 <button onclick="calculate()">Calculate</button>
 <button onclick="clearAll()">Clear</button>
 </div>
-
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;width:100%;">
 <button onclick="exportTXT()">Export as TXT</button>
 <button onclick="exportPDF()">Export as PDF</button>
 <button onclick="exportDOCX()">Export as DOCX</button>
 </div>
-
 <div id="result"></div>
+<canvas id="numerologyChart"></canvas>
+<canvas id="soulPieChart"></canvas>
 <footer>© Manik Roy 2025. All Rights Reserved.</footer>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+// === Dark Mode ===
+function toggleDarkMode(){document.body.classList.toggle('dark-mode');}
+
 // === Numerology Maps ===
 const pMap={A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,I:9,J:1,K:2,L:3,M:4,N:5,O:6,P:7,Q:8,R:9,S:1,T:2,U:3,V:4,W:5,X:6,Y:7,Z:8};
 const cMap={A:1,B:2,C:3,D:4,E:5,F:8,G:3,H:5,I:1,J:1,K:2,L:3,M:4,N:5,O:7,P:8,Q:1,R:2,S:3,T:4,U:6,V:6,W:6,X:5,Y:1,Z:7};
 const vedicMap={A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,I:9,J:1,K:2,L:3,M:4,N:5,O:7,P:8,Q:9,R:1,S:2,T:3,U:4,V:5,W:6,X:7,Y:8,Z:9};
 const kabbalahMap={A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,I:9,J:10,K:20,L:30,M:40,N:50,O:60,P:70,Q:80,R:90,S:100,T:200,U:300,V:400,W:500,X:600,Y:700,Z:800};
 
-// === Phonetic map for name correction ===
-const phoneticMap = {
-  A:['A','E'], E:['E','A'], I:['I','Y'], O:['O'], U:['U'],
-  B:['B','P'], C:['C','K','S'], D:['D','T'], F:['F','PH'], G:['G','J'], H:['H'],
-  J:['J','G'], K:['K','C'], L:['L'], M:['M'], N:['N'], P:['P','B'], Q:['Q','K'],
-  R:['R'], S:['S','C'], T:['T','D'], V:['V','W'], W:['W','V'], X:['X','KS'], Y:['Y','I'], Z:['Z']
-};
-
-// === Dark Mode ===
-function toggleDarkMode(){document.body.classList.toggle('dark-mode');}
-
-// === Numerology Functions with compound numbers ===
-function sumDigits(num, keepMaster=false){
-    num=parseInt(num);
-    if(keepMaster && (num===11||num===22||num===33)) return num;
-    while(num>9){num=num.toString().split('').reduce((a,b)=>a+parseInt(b),0);
-        if(keepMaster && (num===11||num===22||num===33)) return num;}
-    return num;
-}
-
-function numerology(name,map,keepMaster=false){
-    let sum=0;
-    name=name.toUpperCase();
-    for(let ch of name){
-        if(/[A-Z]/.test(ch)) sum+=map[ch];
-        if(/\d/.test(ch)) sum+=parseInt(ch);
-    }
-    return sumDigits(sum, keepMaster);
-}
-
+// === Basic Numerology Functions ===
+function sumDigits(num, keepMaster=false){num=parseInt(num);if(keepMaster&&(num===11||num===22||num===33))return num;while(num>9){num=num.toString().split('').reduce((a,b)=>a+parseInt(b),0);if(keepMaster&&(num===11||num===22||num===33))return num;}return num;}
+function numerology(name,map,keepMaster=false){let sum=0;name=name.toUpperCase();for(let ch of name){if(/[A-Z]/.test(ch))sum+=map[ch];if(/\d/.test(ch))sum+=parseInt(ch);}return sumDigits(sum,keepMaster);}
 function vowelNumber(name,map,keepMaster=false){return numerology(name.replace(/[^AEIOU]/gi,''),map,keepMaster);}
 function consonantNumber(name,map,keepMaster=false){return numerology(name.replace(/[AEIOU]/gi,''),map,keepMaster);}
-function birthdayNumber(date,keepMaster=false){if(!date) return ''; return sumDigits(parseInt(date.split('-')[2]),keepMaster);}
-function lifePathNumber(date,keepMaster=false){if(!date) return ''; return sumDigits(date.replace(/-/g,''),keepMaster);}
-function compatibility(n1,n2){if(!n1||!n2) return 'Provide both names for compatibility.'; return `Compatibility based on harmony and mutual understanding.`;}
+function birthdayNumber(date,keepMaster=false){if(!date)return '';return sumDigits(parseInt(date.split('-')[2]),keepMaster);}
+function lifePathNumber(date,keepMaster=false){if(!date)return '';return sumDigits(date.replace(/-/g,''),keepMaster);}
+function compatibility(n1,n2){if(!n1||!n2)return 'Provide both names for compatibility.';return `Compatibility based on harmony and mutual understanding.`;}
 
-// === Name Correction Suggestions preserving meaning/pronunciation ===
-function suggestBetterNames(originalName,map){
-    if(!originalName) return [];
-    originalName = originalName.toUpperCase();
-    const suggestions = [];
-    for(let i=0;i<originalName.length;i++){
-        const ch = originalName[i];
-        if(/[A-Z]/.test(ch) && phoneticMap[ch]){
-            for(let sub of phoneticMap[ch]){
-                if(sub !== ch){
-                    let newName = originalName.slice(0,i) + sub + originalName.slice(i+1);
-                    const value = numerology(newName,map,true);
-                    suggestions.push({name:newName, value});
-                }
-            }
-        }
-    }
-    suggestions.sort((a,b)=>Math.min(Math.abs(a.value-1),Math.abs(a.value-11),Math.abs(a.value-22),Math.abs(a.value-33))
-                                 - Math.min(Math.abs(b.value-1),Math.abs(b.value-11),Math.abs(b.value-22),Math.abs(b.value-33)));
-    return suggestions.slice(0,3);
-}
+// === Interpretations (shortened for brevity) ===
+const interpretations={1:{meaning:"Leadership",career:"Management",luck:"Bold actions",finance:"Strategic",health:"Stress"},2:{meaning:"Harmony",career:"Teamwork",luck:"Collaboration",finance:"Shared",health:"Emotional"},3:{meaning:"Creativity",career:"Arts",luck:"Networking",finance:"Creative",health:"Mental"},4:{meaning:"Stability",career:"Admin",luck:"Consistency",finance:"Planning",health:"Routine"},5:{meaning:"Freedom",career:"Travel",luck:"Change",finance:"Flexible",health:"Active"},6:{meaning:"Responsibility",career:"Healthcare",luck:"Support",finance:"Balanced",health:"Mind-body"},7:{meaning:"Wisdom",career:"Research",luck:"Solitude",finance:"Strategic",health:"Meditation"},8:{meaning:"Power",career:"Leadership",luck:"Hard work",finance:"Wealth",health:"Stress"},9:{meaning:"Humanitarian",career:"Charity",luck:"Helping",finance:"Ethical",health:"Emotional"},11:{meaning:"Master Intuition",career:"Creative",luck:"Intuition",finance:"Visionary",health:"Alignment"},22:{meaning:"Master Builder",career:"Management",luck:"Persistence",finance:"Strategic",health:"Avoid overwork"},33:{meaning:"Master Teacher",career:"Mentoring",luck:"Service",finance:"Responsible",health:"Balance"}};
 
-// === Interpretations & Insights ===
-const interpretations={
-  1:{meaning:"Leadership, independence, self-confidence. Pioneers, ambitious.",career:"Entrepreneurship, management, innovation.",luck:"Bold actions bring opportunities.",finance:"Strategic investments.",health:"Stress management needed."},
-  2:{meaning:"Harmony, diplomacy, cooperation.",career:"Teamwork, counseling.",luck:"Collaborations bring benefits.",finance:"Shared resources.",health:"Emotional balance."},
-  3:{meaning:"Creativity, communication, optimism.",career:"Arts, media.",luck:"Networking increases chances.",finance:"Creative ventures.",health:"Mental stimulation."},
-  4:{meaning:"Stability, discipline, practicality.",career:"Administrative work.",luck:"Consistency creates opportunities.",finance:"Planning and budgeting.",health:"Routine essential."},
-  5:{meaning:"Freedom, adaptability, adventure.",career:"Travel, marketing.",luck:"Change brings fortune.",finance:"Flexible approach.",health:"Active lifestyle."},
-  6:{meaning:"Responsibility, compassion, nurturing.",career:"Healthcare, social work.",luck:"Supportive environment.",finance:"Balanced approach.",health:"Mind-body equilibrium."},
-  7:{meaning:"Introspection, wisdom, spirituality.",career:"Research, academics.",luck:"Solitude brings insight.",finance:"Strategic thinking.",health:"Meditation."},
-  8:{meaning:"Power, ambition, material success.",career:"Leadership, business.",luck:"Hard work creates opportunities.",finance:"Wealth accumulation.",health:"Stress management."},
-  9:{meaning:"Compassion, humanitarianism.",career:"Charity, guidance roles.",luck:"Helping others benefits.",finance:"Ethical growth.",health:"Emotional balance."},
-  11:{meaning:"Master Intuition and Inspiration.",career:"Creative innovation.",luck:"Intuition leads to success.",finance:"Visionary investments.",health:"Mind-body-spirit alignment."},
-  22:{meaning:"Master Builder, practical vision.",career:"Business, management, construction.",luck:"Persistence brings rewards.",finance:"Strategic planning.",health:"Avoid overwork."},
-  33:{meaning:"Master Teacher, service and guidance.",career:"Mentoring, education, leadership.",luck:"Service-oriented work enhances fortune.",finance:"Responsible investments.",health:"Self-care and balance."}
-};
-
-// === Extra Insights ===
-const careerInsights="Leverage strengths, work consistently, network strategically, and focus on ethics.";
-const luckInsights="Be proactive, receptive to change, align effort with intuition.";
-const financialInsights="Budget wisely, invest prudently, leverage talents, plan long-term.";
-const healthInsights="Maintain physical, mental, and emotional balance, manage stress, prioritize self-care.";
-
-// === Calculate Function ===
+// === Calculate Function with Charts ===
 function calculate(){
     const system=document.getElementById('system').value;
     let map=pMap;
@@ -173,30 +101,20 @@ function calculate(){
 
     const fullName=document.getElementById('fullName').value.trim();
     const birthDate=document.getElementById('birthDate').value.trim();
-    const secondName=document.getElementById('secondName').value.trim();
-    const secondBirth=document.getElementById('secondBirthDate').value.trim();
-    const otherInputs=document.getElementById('inputText').value.split(/[\n,]+/).filter(x=>x.trim()!=='');
-
-    const extraInputs=[
-        {cat:"Name Correction",value:document.getElementById('nameCorrection').value.trim()},
-        {cat:"Home Address Number",value:document.getElementById('homeAddress').value.trim()},
-        {cat:"Product Name",value:document.getElementById('productName').value.trim()},
-        {cat:"Business Name",value:document.getElementById('businessName').value.trim()},
-        {cat:"Car Number Plate",value:document.getElementById('carPlate').value.trim()},
-        {cat:"Place Name",value:document.getElementById('placeName').value.trim()}
-    ];
 
     let html='<table><tr><th>Category</th><th>Value</th><th>Meaning</th><th>Career</th><th>Luck</th><th>Finance</th><th>Health</th></tr>';
 
-    function getInterp(num){return interpretations[num]||{meaning:'N/A',career:careerInsights,luck:luckInsights,finance:financialInsights,health:healthInsights};}
+    function getInterp(num){return interpretations[num]||{meaning:'N/A',career:'-',luck:'-',finance:'-',health:'-'};}
 
+    let chartData={labels:[],values:[]};
     if(fullName){
         const destiny=numerology(fullName,map,true);
         const soul=vowelNumber(fullName,map,true);
         const personality=consonantNumber(fullName,map,true);
-        [{cat:'Destiny / Expression',num:destiny},{cat:"Soul Urge / Heart's Desire",num:soul},{cat:'Personality',num:personality}].forEach(item=>{
+        [{cat:'Destiny / Expression',num:destiny},{cat:"Soul Urge",num:soul},{cat:'Personality',num:personality}].forEach(item=>{
             const interp=getInterp(item.num);
             html+=`<tr><td>${item.cat}</td><td>${item.num}</td><td>${interp.meaning}</td><td>${interp.career}</td><td>${interp.luck}</td><td>${interp.finance}</td><td>${interp.health}</td></tr>`;
+            chartData.labels.push(item.cat); chartData.values.push(item.num);
         });
     }
 
@@ -206,68 +124,36 @@ function calculate(){
         [{cat:'Life Path',num:lifePath},{cat:'Birthday Number',num:bday}].forEach(item=>{
             const interp=getInterp(item.num);
             html+=`<tr><td>${item.cat}</td><td>${item.num}</td><td>${interp.meaning}</td><td>${interp.career}</td><td>${interp.luck}</td><td>${interp.finance}</td><td>${interp.health}</td></tr>`;
+            chartData.labels.push(item.cat); chartData.values.push(item.num);
         });
     }
 
-    if(fullName && secondName){
-        html+=`<tr><td>Compatibility</td><td>--</td><td>${compatibility(fullName,secondName)}</td><td colspan="4"></td></tr>`;
-    }
-
-    for(let input of otherInputs){
-        const val=numerology(input,map,true);
-        const interp=getInterp(val);
-        html+=`<tr><td>Input: ${input}</td><td>${val}</td><td>${interp.meaning}</td><td>${interp.career}</td><td>${interp.luck}</td><td>${interp.finance}</td><td>${interp.health}</td></tr>`;
-    }
-
-    // Extra Inputs handling
-    extraInputs.forEach(item=>{
-        if(item.value){
-            if(item.cat==="Name Correction"){
-                const origNum=numerology(item.value,map,true);
-                const interp=getInterp(origNum);
-                html+=`<tr><td>Original Name: ${item.value}</td><td>${origNum}</td><td>${interp.meaning} (Pronunciation preserved)</td><td>${interp.career}</td><td>${interp.luck}</td><td>${interp.finance}</td><td>${interp.health}</td></tr>`;
-                const suggestions=suggestBetterNames(item.value,map);
-                suggestions.forEach(s=>{
-                    const interp2=getInterp(s.value);
-                    html+=`<tr><td>Suggested Name: ${s.name}</td><td>${s.value}</td><td>${interp2.meaning} (Improved numerology)</td><td>${interp2.career}</td><td>${interp2.luck}</td><td>${interp2.finance}</td><td>${interp2.health}</td></tr>`;
-                });
-            } else {
-                const val=numerology(item.value,map,true);
-                const interp=getInterp(val);
-                html+=`<tr><td>${item.cat}: ${item.value}</td><td>${val}</td><td>${interp.meaning}</td><td>${interp.career}</td><td>${interp.luck}</td><td>${interp.finance}</td><td>${interp.health}</td></tr>`;
-            }
-        }
-    });
-
     document.getElementById('result').innerHTML=html+'</table>';
+
+    // === Charts ===
+    renderCharts(chartData);
 }
 
-// === Clear Inputs & Table ===
-function clearAll(){
-    ['fullName','birthDate','secondName','secondBirthDate','inputText','nameCorrection','homeAddress','productName','businessName','carPlate','placeName'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('result').innerHTML='';
+function renderCharts(data){
+    const ctx=document.getElementById('numerologyChart').getContext('2d');
+    if(window.numChart) window.numChart.destroy();
+    window.numChart=new Chart(ctx,{type:'bar',data:{labels:data.labels,datasets:[{label:'Numerology Value',data:data.values,backgroundColor:'rgba(54, 162, 235, 0.6)'}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+
+    const vowels=fullNameVowels();
+    const consonants=fullNameConsonants();
+    const ctx2=document.getElementById('soulPieChart').getContext('2d');
+    if(window.pieChart) window.pieChart.destroy();
+    window.pieChart=new Chart(ctx2,{type:'pie',data:{labels:['Soul (Vowels)','Personality (Consonants)'],datasets:[{data:[vowels,consonants],backgroundColor:['#FF6384','#36A2EB']}]}});
 }
 
-// === Export Functions ===
-function exportTXT(){
-    const table=document.getElementById('result').querySelector('table'); if(!table){alert('No report');return;}
-    let txt='NumeroScope Report\n\n';
-    for(let row of table.rows){txt += Array.from(row.cells).map(c=>c.innerText).join('\t')+'\n';}
-    const blob=new Blob([txt],{type:'text/plain'}); const link=document.createElement('a'); link.href=URL.createObjectURL(blob); link.download='NumeroScope_Report.txt'; link.click();
-}
-function exportPDF(){
-    const table=document.getElementById('result'); if(!table.innerHTML){alert('No report');return;}
-    const printWindow=window.open('','_blank','width=800,height=600');
-    printWindow.document.write('<html><head><title>NumeroScope Report</title></head><body><h2>NumeroScope Report</h2>'+table.innerHTML+'</body></html>');
-    printWindow.document.close(); printWindow.print();
-}
-function exportDOCX(){
-    const table=document.getElementById('result').querySelector('table'); if(!table){alert('No report');return;}
-    let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><title>NumeroScope Report</title></head><body>`;
-    html+=table.outerHTML+'</body></html>';
-    const blob=new Blob(['\ufeff',html],{type:'application/msword'});
-    const link=document.createElement('a'); link.href=URL.createObjectURL(blob); link.download='NumeroScope_Report.doc'; link.click();
-}
+function fullNameVowels(){const name=document.getElementById('fullName').value.trim().toUpperCase();let sum=0;for(let ch of name){if(/[AEIOU]/.test(ch))sum+=1;}return sum;}
+function fullNameConsonants(){const name=document.getElementById('fullName').value.trim().toUpperCase();let sum=0;for(let ch of name){if(/[BCDFGHJKLMNPQRSTVWXYZ]/.test(ch))sum+=1;}return sum;}
+
+function clearAll(){['fullName','birthDate','secondName','secondBirthDate','inputText','nameCorrection','homeAddress','productName','businessName','carPlate','placeName'].forEach(id=>document.getElementById(id).value='');document.getElementById('result').innerHTML='';if(window.numChart) window.numChart.destroy();if(window.pieChart) window.pieChart.destroy();}
+
+function exportTXT(){const table=document.getElementById('result').querySelector('table');if(!table){alert('No report');return;}let txt='NumeroScope Report\n\n';for(let row of table.rows){txt+=Array.from(row.cells).map(c=>c.innerText).join('\t')+'\n';}const blob=new Blob([txt],{type:'text/plain'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='NumeroScope_Report.txt';link.click();}
+function exportPDF(){const table=document.getElementById('result');if(!table.innerHTML){alert('No report');return;}const printWindow=window.open('','_blank','width=800,height=600');printWindow.document.write('<html><head><title>NumeroScope Report</title></head><body><h2>NumeroScope Report</h2>'+table.innerHTML+'</body></html>');printWindow.document.close();printWindow.print();}
+function exportDOCX(){const table=document.getElementById('result').querySelector('table');if(!table){alert('No report');return;}let html=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><title>NumeroScope Report</title></head><body>`;html+=table.outerHTML+'</body></html>';const blob=new Blob(['﻿',html],{type:'application/msword'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='NumeroScope_Report.doc';link.click();}
 </script>
 </body>
 </html>
